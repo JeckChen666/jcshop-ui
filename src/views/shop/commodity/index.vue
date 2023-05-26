@@ -167,7 +167,45 @@
           <image-upload v-model="form.detailImage"/>
         </el-form-item>
         <el-form-item label="商品选项" prop="opt">
-<!--          <el-input v-model="form.opt" type="textarea" placeholder="请输入内容"/>-->
+          <el-input
+            placeholder="请输入内容"
+            v-model="addOptValue"
+          >
+            <el-button slot="append" @click="addOpt()" type="primary">添加</el-button>
+          </el-input>
+          <!--          <el-input v-model="form.opt" type="textarea" placeholder="请输入内容"/>-->
+          <div v-for="(value, key) in form.opt" :key="key">
+            <div :id="key" class="optBorder">
+              <div style="font-size: 16px;font-weight: bold">{{ key }}</div>
+              <el-button v-show="form.opt[key]===undefined" @click="addOptItem(key,0)" type="primary"
+                         icon="el-icon-plus" size="mini" circle
+              ></el-button>
+              <div v-for="( valueValue,valueKey ) in value">
+                <div class="mb4">
+                  <span style="font-size: 12px;font-weight: bold;margin-right: 8px">
+                    序号：{{ valueKey + 1 }}
+                  </span>
+                  <span style="font-size: 12px;font-weight: bold;margin-right: 8px">
+                    标签： {{ valueValue.text }}
+                  </span>
+                  <span style="font-size: 12px;font-weight: bold;margin-right: 8px">
+                    价格调整： {{ valueValue.adjustPrice }}
+                  </span>
+                  <!--                  <el-button @click="test(form.opt[key][valueKey])" type="danger" icon="el-icon-delete" size="mini" circle ></el-button>-->
+                  <el-button @click="addOptItem(key,valueKey)" type="primary" icon="el-icon-plus" size="mini" circle
+                  ></el-button>
+                  <el-button @click="deleteOptItem(key,valueKey)" type="danger" icon="el-icon-delete" size="mini"
+                             circle
+                  ></el-button>
+                </div>
+                <el-input class="mb8" v-model="form.opt[key][valueKey].text"></el-input>
+                <el-input-number class="mb20" v-model="form.opt[key][valueKey].adjustPrice" :step="0.5" :min="0"
+                ></el-input-number>
+              </div>
+              <el-button type="danger" @click="deleteOpt(key)">删除</el-button>
+            </div>
+          </div>
+
         </el-form-item>
         <el-form-item label="商品状态" prop="state">
           <el-select v-model="form.state" placeholder="请选择商品状态">
@@ -235,12 +273,13 @@ export default {
       form: {},
       // 表单校验
       rules: {},
-      optMap: [],
-      optLable: [],
-      optItem: {
-        text: '',
-        adjustPrice: 0
-      }
+      // optMap: [],
+      // optLable: [],
+      // optItem: {
+      //   text: '',
+      //   adjustPrice: 0
+      // }
+      addOptValue: undefined
 
     }
   },
@@ -248,20 +287,63 @@ export default {
     this.getList()
   },
   methods: {
+    test(s) {
+      console.log('sss')
+      console.log(s)
+    },
+    addOpt(key) {
+      // console.log('-----')
+      // console.log(this.$data.form)
+      // console.log(this.$data.form.opt)
+      let str = this.addOptValue === undefined ? '未设置的标题' : this.addOptValue
+      if (this.$data.form.opt == null) {
+        this.$data.form.opt = {}
+      }
+      // this.$set(this.$data.form,"opt", undefined);
+      // this.$data.form.opt[str] = "undefined"
+      this.$set(this.$data.form.opt, str, undefined)
+      console.log(this.$data.form.opt)
+    },
+    deleteOpt(key) {
+      console.log(key)
+      this.$set(this.$data.form.opt, key, 'undefined')
+      delete this.$data.form.opt[key]
+      console.log(this.$data.form.opt)
+    },
+    addOptItem(key, valueKey) {
+      // console.log(key)
+      // console.log(valueKey)
+      let arr = this.$data.form.opt[key] !== undefined ? this.$data.form.opt[key] : new Array()
+      let obj = {
+        text: '请输入项目名',
+        // text: undefined,
+        adjustPrice: 1
+      }
+      // console.log("arr",arr)
+      arr.splice(valueKey + 1, 0, obj)
+      // console.log("arr",arr)
+      this.$data.form.opt[key] = arr
+      // console.log("this.$data.form.opt[key]",this.$data.form.opt[key])
+    },
+    deleteOptItem(key, valueKey) {
+      let arr = this.$data.form.opt[key]
+      arr.splice(valueKey, 1)
+      this.$data.form.opt[key] = arr
+    },
     /** 查询商品列表 */
     getList() {
       this.loading = true
       listCommodity(this.queryParams).then(response => {
         let tmpList = response.rows
         // this.commodityList = response.rows
-        for (let responseKey in  tmpList) {
+        for (let responseKey in tmpList) {
           // console.log(responseKey, tmpList[responseKey].viewImage)
           tmpList[responseKey].viewImage = this.arrayToStr(tmpList[responseKey].viewImage)
           // console.log(responseKey, tmpList[responseKey].viewImage)
           tmpList[responseKey].detailImage = this.arrayToStr(tmpList[responseKey].detailImage)
         }
         this.commodityList = tmpList
-        // console.log(this.commodityList)
+        console.log(this.commodityList)
         this.total = response.total
         this.loading = false
       })
@@ -388,16 +470,16 @@ export default {
       // var json_str = JSON.stringify(arr);
       // return json_str
 
-      return  image.split(",")
+      return image.split(',')
 
     },
     arrayToStr(arr) {
-      if (arr===null){
-        return ""
+      if (arr === null) {
+        return ''
       }
-      let newStr = arr.join(",")
+      let newStr = arr.join(',')
       // 返回结果
-      return newStr;
+      return newStr
     },
     traverseOpt(obj, indent) { // 定义一个递归函数，参数为对象和缩进
       var str = '' // 初始化一个空字符串
@@ -433,3 +515,11 @@ export default {
   }
 }
 </script>
+<style scoped>
+.optBorder {
+  border: 1px rgba(123, 123, 123, 0.53) solid;
+  border-radius: 8px;
+  margin: 12px 4px;
+  padding: 12px;
+}
+</style>
